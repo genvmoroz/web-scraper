@@ -128,12 +128,14 @@ func (s *Scraper) FindNode(fullXPath string) (*html.Node, error) {
 		return nil, fmt.Errorf("should have a prefix \"/\"")
 	}
 
-	return findNode(strings.Split(fullXPath[1:], pathDelimiter), s.doc)
+	return findNode(strings.Split(fullXPath[1:], pathDelimiter)[1:], s.doc.FirstChild.NextSibling)
 }
 
 func findNode(path []string, rootNode *html.Node) (*html.Node, error) {
 	if len(path) == 0 {
 		return rootNode, nil
+	} else {
+		rootNode = rootNode.FirstChild
 	}
 
 	var (
@@ -151,28 +153,13 @@ func findNode(path []string, rootNode *html.Node) (*html.Node, error) {
 	}
 
 	for n := rootNode; n != nil; n = n.NextSibling {
-		switch n.Type {
-		case html.ErrorNode:
-			return nil, errors.New("node processing error")
-		case html.DocumentNode:
-			return findNode(path, n.FirstChild)
-		case html.DoctypeNode:
-			return findNode(path, n.NextSibling)
-		case html.ElementNode:
-			if n.Data == targetTagName {
-				if tagsCount == tagNum {
-					return findNode(path[1:], n.FirstChild)
-				} else {
-					tagsCount++
-				}
-			}
-		case html.TextNode:
-			if strings.HasPrefix(targetTagName, "text") {
-				if tagsCount == tagNum {
-					return findNode(path[1:], n)
-				} else {
-					tagsCount++
-				}
+		if (n.Type == html.TextNode && strings.HasPrefix(targetTagName, "text")) ||
+			n.Data == targetTagName {
+
+			if tagsCount == tagNum {
+				return findNode(path[1:], n)
+			} else {
+				tagsCount++
 			}
 		}
 	}

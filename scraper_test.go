@@ -425,7 +425,7 @@ func TestScraperGetValue(t *testing.T) {
 		{
 			name:   "correct",
 			fields: fields{doc: correctDoc},
-			args:   args{fullXPath: "/html/body/div[1]/div[1]/div[1]/div[2]/div[3]/div/div[2]/div/div[1]/div[1]/div/span[1]/span/span/span/span/span/span/span/span/span/span/span/span"},
+			args:   args{fullXPath: "/html/body/div[1]/div[1]/div[1]/div[2]/div[3]/div/div[2]/div/div[1]/div[1]/div/span[1]/span/span/span/span/span/span/span/span/span/span/span/span/text"},
 			want:   "12 981 - 14 444",
 		},
 		{
