@@ -18,7 +18,7 @@ import (
 const (
 	pathDelimiter      = "/"
 	digits             = "1234567890"
-	notAllowedSymbols  = "!@#$%^&*()_+-={}!\"№;'<>/\\~`:?*"
+	notAllowedSymbols  = "!@#$%^&*_+-={}!\"№;'<>/\\~`:?*"
 	tagRegexPattern    = "^[A-Za-z]+(\\d+)?(\\[\\d+]{1})?$"
 	openSquareBracket  = '['
 	closeSquareBracket = ']'
@@ -87,24 +87,53 @@ func New(webAddress string, client HTTPClient) (*Scraper, error) {
 }
 
 func (s *Scraper) GetValue(fullXPath string) (string, error) {
+	node, err := s.scrapeNode(fullXPath, findNode)
+	if err != nil {
+		return "", err
+	}
+
+	if node.Type == html.TextNode {
+		return node.Data, nil
+	} else {
+		return "", fmt.Errorf("failed to get string value from node, NodeType: %v", node.Type)
+	}
+}
+
+func (s *Scraper) NextAfter(fullXPath string) ([]*html.Node, error) {
+	node, err := s.scrapeNode(fullXPath, findNode)
+	if err != nil {
+		return nil, err
+	}
+
+	return collectAfter(node), nil
+}
+
+func collectAfter(node *html.Node) []*html.Node {
+	var nodes []*html.Node
+
+	for n := node; n != nil; n = n.NextSibling {
+		nodes = append(nodes, n)
+		nodes = append(nodes, collectAfter(n.FirstChild)...)
+	}
+
+	return nodes
+}
+
+func (s *Scraper) scrapeNode(fullXPath string, process func(path []string, rootNode *html.Node) (*html.Node, error)) (*html.Node, error) {
 	if !utf8.ValidString(fullXPath) {
-		return "", errors.New("fullXPath is not valid utf8 string")
+		return nil, errors.New("fullXPath is not valid utf8 string")
 	}
 
 	if !strings.HasPrefix(fullXPath, pathDelimiter) {
-		return "", fmt.Errorf("should have a prefix \"/\"")
+		return nil, fmt.Errorf("should have a prefix \"/\"")
 	}
 
-	return parseValue(strings.Split(fullXPath[1:], pathDelimiter), s.doc)
+	return process(strings.Split(fullXPath[1:], pathDelimiter), s.doc)
 }
 
-func parseValue(path []string, rootNode *html.Node) (string, error) {
+func findNode(path []string, rootNode *html.Node) (*html.Node, error) {
 	if len(path) == 0 {
-		if rootNode.Type == html.TextNode {
-			return rootNode.Data, nil
-		} else {
-			return "", fmt.Errorf("failed to get string value from node, NodeType: %v", rootNode.Type)
-		}
+		return rootNode, nil
 	}
 
 	var (
@@ -114,7 +143,7 @@ func parseValue(path []string, rootNode *html.Node) (string, error) {
 
 	tagNum, err := parseElement(targetTagName)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse element number: %w", err)
+		return nil, fmt.Errorf("failed to parse element number: %w", err)
 	}
 
 	if strings.ContainsRune(targetTagName, '[') {
@@ -124,15 +153,23 @@ func parseValue(path []string, rootNode *html.Node) (string, error) {
 	for n := rootNode; n != nil; n = n.NextSibling {
 		switch n.Type {
 		case html.ErrorNode:
-			return "", errors.New("node processing error")
+			return nil, errors.New("node processing error")
 		case html.DocumentNode:
-			return parseValue(path, n.FirstChild)
+			return findNode(path, n.FirstChild)
 		case html.DoctypeNode:
-			return parseValue(path, n.NextSibling)
+			return findNode(path, n.NextSibling)
 		case html.ElementNode:
 			if n.Data == targetTagName {
 				if tagsCount == tagNum {
-					return parseValue(path[1:], n.FirstChild)
+					return findNode(path[1:], n.FirstChild)
+				} else {
+					tagsCount++
+				}
+			}
+		case html.TextNode:
+			if strings.HasPrefix(targetTagName, "text") {
+				if tagsCount == tagNum {
+					return findNode(path[1:], n)
 				} else {
 					tagsCount++
 				}
@@ -140,7 +177,7 @@ func parseValue(path []string, rootNode *html.Node) (string, error) {
 		}
 	}
 
-	return "", errors.New("element not found")
+	return nil, errors.New("element not found")
 }
 
 // parseElement parses html element by path, returns its number or error if occurred

@@ -320,22 +320,6 @@ func TestNewHTTPClientWithRetry(t *testing.T) {
 			},
 		},
 		{
-			name: "0 retires",
-			args: args{
-				retries:      0,
-				retryTimeout: 30 * time.Second,
-			},
-			wantErr: true,
-		},
-		{
-			name: "0 retires",
-			args: args{
-				retries:      0,
-				retryTimeout: 30 * time.Second,
-			},
-			wantErr: true,
-		},
-		{
 			name: "negative retryTimeout",
 			args: args{
 				retries:      30,
