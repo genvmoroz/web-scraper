@@ -87,7 +87,7 @@ func New(webAddress string, client HTTPClient) (*Scraper, error) {
 }
 
 func (s *Scraper) GetValue(fullXPath string) (string, error) {
-	node, err := s.scrapeNode(fullXPath, findNode)
+	node, err := s.FindNode(fullXPath)
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +100,7 @@ func (s *Scraper) GetValue(fullXPath string) (string, error) {
 }
 
 func (s *Scraper) NextAfter(fullXPath string) ([]*html.Node, error) {
-	node, err := s.scrapeNode(fullXPath, findNode)
+	node, err := s.FindNode(fullXPath)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func collectAfter(node *html.Node) []*html.Node {
 	return nodes
 }
 
-func (s *Scraper) scrapeNode(fullXPath string, process func(path []string, rootNode *html.Node) (*html.Node, error)) (*html.Node, error) {
+func (s *Scraper) FindNode(fullXPath string) (*html.Node, error) {
 	if !utf8.ValidString(fullXPath) {
 		return nil, errors.New("fullXPath is not valid utf8 string")
 	}
@@ -128,7 +128,7 @@ func (s *Scraper) scrapeNode(fullXPath string, process func(path []string, rootN
 		return nil, fmt.Errorf("should have a prefix \"/\"")
 	}
 
-	return process(strings.Split(fullXPath[1:], pathDelimiter), s.doc)
+	return findNode(strings.Split(fullXPath[1:], pathDelimiter), s.doc)
 }
 
 func findNode(path []string, rootNode *html.Node) (*html.Node, error) {
