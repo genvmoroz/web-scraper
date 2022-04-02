@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
 )
@@ -39,10 +40,13 @@ type (
 	}
 )
 
-// DefaultHTTPClient is a HTTPClient with retry configured with default parameters: retries = 3,  retryTimeout = 30s
+// DefaultHTTPClient is a HTTPClient with configured retry: retries = 3, retryTimeout = 30s
 var DefaultHTTPClient = defaultHTTPClientWithRetry()
 
 func New(webAddress string, client HTTPClient) (*Scraper, error) {
+	if !utf8.ValidString(webAddress) {
+		return nil, errors.New("webAddress is not valid utf8 string")
+	}
 	if client == nil {
 		return nil, errors.New("client should be not nil")
 	}
@@ -83,6 +87,10 @@ func New(webAddress string, client HTTPClient) (*Scraper, error) {
 }
 
 func (s *Scraper) GetValue(fullXPath string) (string, error) {
+	if !utf8.ValidString(fullXPath) {
+		return "", errors.New("fullXPath is not valid utf8 string")
+	}
+
 	if !strings.HasPrefix(fullXPath, pathDelimiter) {
 		return "", fmt.Errorf("should have a prefix \"/\"")
 	}
