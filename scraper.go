@@ -208,9 +208,6 @@ func getSquareBracketsIndexes(s string) (o int, c int) {
 }
 
 func NewHTTPClientWithRetry(retries uint, retryTimeout time.Duration) (HTTPClient, error) {
-	if retries < 1 {
-		return nil, errors.New("retries should not be less than 1")
-	}
 	if retryTimeout < 0 {
 		return nil, errors.New("retryTimeout should not be negative")
 	}
@@ -245,9 +242,6 @@ func (c *httpClientWithRetry) Get(url *url.URL) (*http.Response, error) {
 	if url == nil {
 		return nil, errors.New("url cannot be nil")
 	}
-	if c.retries < 1 {
-		return nil, errors.New("retries should not be less than 1")
-	}
 	if c.retryTimeout < 0 {
 		return nil, errors.New("retryTimeout should not be negative")
 	}
@@ -260,13 +254,15 @@ func (c *httpClientWithRetry) Get(url *url.URL) (*http.Response, error) {
 		err  error
 		resp *http.Response
 	)
-	for retry := c.retries; retry > 0; retry-- {
+	for retry := c.retries; retry >= 0; retry-- {
 		resp, err = c.client.Do(req)
 		if err == nil {
 			return resp, nil
 		}
 		log.Printf("failed to do GET request: %s. Retrying", err.Error())
-		time.Sleep(c.retryTimeout)
+		if retry > 0 {
+			time.Sleep(c.retryTimeout)
+		}
 	}
 
 	return nil, fmt.Errorf("execution request timeout: %w", err)
