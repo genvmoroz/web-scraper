@@ -6,8 +6,6 @@ ci: lint unit_test
 .PHONY: deps
 deps:
 	go mod tidy -v
-	go mod download
-	go mod vendor -v
 	go mod verify
 
 .PHONY: unit_test
