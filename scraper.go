@@ -108,6 +108,15 @@ func (s *Scraper) NextAfter(fullXPath string) ([]*html.Node, error) {
 	return collectAfter(node), nil
 }
 
+func (s *Scraper) GetChildes(fullXPath string) ([]*html.Node, error) {
+	node, err := s.FindNode(fullXPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return collectAfter(node.FirstChild), nil
+}
+
 func collectAfter(node *html.Node) []*html.Node {
 	var nodes []*html.Node
 
