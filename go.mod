@@ -1,5 +1,5 @@
 module github.com/genvmoroz/web-scraper
 
-go 1.18
+go 1.20
 
-require golang.org/x/net v0.0.0-20220401154927-543a649e0bdd
+require golang.org/x/net v0.9.0

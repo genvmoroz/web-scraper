@@ -57,12 +57,12 @@ func New(webAddress string, client HTTPClient) (*Scraper, error) {
 
 	parsedURL, err := url.Parse(webAddress)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse url [%s]: %w", webAddress, err)
+		return nil, fmt.Errorf("parse url [%s]: %w", webAddress, err)
 	}
 
 	resp, err := client.Get(parsedURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to do GET request to url [%s]: %w", webAddress, err)
+		return nil, fmt.Errorf("perform GET request to url [%s]: %w", webAddress, err)
 	}
 	defer func() {
 		if resp == nil || resp.Body == nil {
@@ -78,7 +78,7 @@ func New(webAddress string, client HTTPClient) (*Scraper, error) {
 
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse content as html: %s", err)
+		return nil, fmt.Errorf("parse content as HTML: %s", err)
 	}
 
 	return &Scraper{
@@ -95,7 +95,7 @@ func (s *Scraper) GetValue(fullXPath string) (string, error) {
 	if node.Type == html.TextNode {
 		return node.Data, nil
 	} else {
-		return "", fmt.Errorf("failed to get string value from node, NodeType: %v", node.Type)
+		return "", fmt.Errorf("node %v isn't text", node.Type)
 	}
 }
 
@@ -154,7 +154,7 @@ func findNode(path []string, rootNode *html.Node) (*html.Node, error) {
 
 	tagNum, err := parseElement(targetTagName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse element number: %w", err)
+		return nil, fmt.Errorf("parse element number: %w", err)
 	}
 
 	if strings.ContainsRune(targetTagName, '[') {
@@ -204,7 +204,7 @@ func parseElement(path string) (uint, error) {
 
 	n, err := strconv.Atoi(path[o+1 : c])
 	if err != nil {
-		return 0, fmt.Errorf("failed to convert string to int: %w", err)
+		return 0, fmt.Errorf("convert string to int: %w", err)
 	}
 
 	return uint(n), nil
@@ -213,7 +213,7 @@ func parseElement(path string) (uint, error) {
 func parseElementWithRegex(s string) (uint, error) {
 	match, err := regexp.MatchString(tagRegexPattern, s)
 	if err != nil {
-		return 0, fmt.Errorf("failed to match string with pattern %s: %w", tagRegexPattern, err)
+		return 0, fmt.Errorf("match string with pattern %s: %w", tagRegexPattern, err)
 	}
 	if !match {
 		return 0, fmt.Errorf("%s does not match with regex pattern %s", s, tagRegexPattern)
@@ -227,15 +227,15 @@ func parseElementWithRegex(s string) (uint, error) {
 
 	n, err := strconv.Atoi(s[o+1 : c])
 	if err != nil {
-		return 0, fmt.Errorf("failed to convert string to int: %w", err)
+		return 0, fmt.Errorf("convert string to int: %w", err)
 	}
 
 	return uint(n), nil
 }
 
 // getSquareBracketsIndexes returns indexes of square brackets
-//	- first returning value is index of open square bracket
-//	- second returning value is index of close square bracket
+//   - first returning value is index of open square bracket
+//   - second returning value is index of close square bracket
 func getSquareBracketsIndexes(s string) (o int, c int) {
 	return strings.IndexByte(s, openSquareBracket), strings.IndexByte(s, closeSquareBracket)
 }
@@ -287,12 +287,12 @@ func (c *httpClientWithRetry) Get(url *url.URL) (*http.Response, error) {
 		err  error
 		resp *http.Response
 	)
-	for retry := c.retries; retry >= 0; retry-- {
+	for retry := int(c.retries); retry >= 0; retry-- {
 		resp, err = c.client.Do(req)
 		if err == nil {
 			return resp, nil
 		}
-		log.Printf("failed to do GET request: %s. Retrying", err.Error())
+		log.Printf("perform GET request error: %s. Retrying", err.Error())
 		if retry > 0 {
 			time.Sleep(c.retryTimeout)
 		}

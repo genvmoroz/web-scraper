@@ -2,7 +2,7 @@ OSNAME=$(shell go env GOOS)
 
 TMP_DIR = /tmp
 
-LINT_VERSION = 1.45.2
+LINT_VERSION = 1.52.2
 
 LINT_DIR = $(TMP_DIR)/golangci-lint/$(LINT_VERSION)
 LINT_BIN = $(LINT_DIR)/golangci-lint
