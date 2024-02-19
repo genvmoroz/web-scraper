@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"golang.org/x/net/html"
 )
 
@@ -30,7 +31,7 @@ type (
 	}
 
 	httpClientWithRetry struct {
-		client       http.Client
+		client       *http.Client
 		retries      uint
 		retryTimeout time.Duration
 	}
@@ -246,12 +247,7 @@ func NewHTTPClientWithRetry(retries uint, retryTimeout time.Duration) (HTTPClien
 	}
 
 	return &httpClientWithRetry{
-		client: http.Client{
-			Transport: &http.Transport{
-				DisableKeepAlives: true,
-				MaxIdleConns:      10,
-				IdleConnTimeout:   30 * time.Second},
-		},
+		client:       cleanhttp.DefaultClient(),
 		retries:      retries,
 		retryTimeout: retryTimeout,
 	}, nil
@@ -259,13 +255,7 @@ func NewHTTPClientWithRetry(retries uint, retryTimeout time.Duration) (HTTPClien
 
 func defaultHTTPClientWithRetry() HTTPClient {
 	return &httpClientWithRetry{
-		client: http.Client{
-			Transport: &http.Transport{
-				DisableKeepAlives: true,
-				MaxIdleConns:      10,
-				IdleConnTimeout:   30 * time.Second,
-			},
-		},
+		client:       cleanhttp.DefaultClient(),
 		retries:      3,
 		retryTimeout: 30 * time.Second,
 	}

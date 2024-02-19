@@ -300,21 +300,11 @@ func TestNewHTTPClientWithRetry(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    HTTPClient
 		wantErr bool
 	}{
 		{
 			name: "correct",
 			args: args{
-				retries:      10,
-				retryTimeout: 30 * time.Second,
-			},
-			want: &httpClientWithRetry{
-				client: http.Client{Transport: &http.Transport{
-					DisableKeepAlives: true,
-					MaxIdleConns:      10,
-					IdleConnTimeout:   30 * time.Second,
-				}},
 				retries:      10,
 				retryTimeout: 30 * time.Second,
 			},
@@ -330,13 +320,10 @@ func TestNewHTTPClientWithRetry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewHTTPClientWithRetry(tt.args.retries, tt.args.retryTimeout)
+			_, err := NewHTTPClientWithRetry(tt.args.retries, tt.args.retryTimeout)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewHTTPClientWithRetry() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewHTTPClientWithRetry() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -465,39 +452,6 @@ func TestScraperGetValue(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("GetValue() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestDefaultHTTPClientWithRetry(t *testing.T) {
-	tests := []struct {
-		name string
-		want HTTPClient
-	}{
-		{
-			name: "correct_1",
-			want: &httpClientWithRetry{
-				client: http.Client{
-					Transport: &http.Transport{
-						DisableKeepAlives: true,
-						MaxIdleConns:      10,
-						IdleConnTimeout:   30 * time.Second,
-					},
-				},
-				retries:      3,
-				retryTimeout: 30 * time.Second,
-			},
-		},
-		{
-			name: "correct global variable",
-			want: DefaultHTTPClient,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := defaultHTTPClientWithRetry(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("defaultHTTPClientWithRetry() = %v, want %v", got, tt.want)
 			}
 		})
 	}
